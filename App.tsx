@@ -7,6 +7,7 @@ type Hub = {
   count: number;
 };
 type Data = { now: number; hubs: Hub[] };
+type ActionKind = "entry" | "reset";
 export default function Home() {
   const [data, setData] = useState<Data | null>(null),
     [now, setNow] = useState(Date.now()),
@@ -17,7 +18,7 @@ export default function Home() {
   const epoch = useRef(0);
   const lock = useRef(false),
     offset = useRef(0),
-    pending = useRef<{ kind: string; hub: number; requestId: string } | null>(
+    pending = useRef<{ kind: ActionKind; hub: number; requestId: string } | null>(
       null,
     ),
     [retry, setRetry] = useState(false);
@@ -29,8 +30,10 @@ export default function Home() {
   }
   useEffect(() => {
     let stopped = false;
+    let refreshing = false;
     async function refresh() {
-      if (lock.current) return;
+      if (lock.current || refreshing) return;
+      refreshing = true;
       const version = ++epoch.current;
       try {
         const r = await rpc("ioa_snapshot", {});
@@ -39,6 +42,8 @@ export default function Home() {
         if (!stopped && !lock.current && version === epoch.current) accept(d);
       } catch {
         if (!stopped && version === epoch.current) setOnline(false);
+      } finally {
+        refreshing = false;
       }
     }
     refresh();
@@ -50,19 +55,19 @@ export default function Home() {
       clearInterval(clock);
     };
   }, []);
-  async function act(kind: string, hub: number) {
+  async function act(kind: ActionKind, hub: number) {
     if (lock.current) return;
     lock.current = true;
     epoch.current++;
     setBusy(true);
     setNotice("");
-    const action = pending.current ?? {
-      kind,
-      hub,
-      requestId: crypto.randomUUID(),
-    };
-    pending.current = action;
     try {
+      const action = pending.current ?? {
+        kind,
+        hub,
+        requestId: crypto.randomUUID(),
+      };
+      pending.current = action;
       const r = await rpc("ioa_action", {
         p_request_id: action.requestId,
         p_kind: action.kind,
@@ -82,9 +87,12 @@ export default function Home() {
       );
     } catch {
       setOnline(false);
-      setRetry(true);
+      setRetry(pending.current !== null);
+      setReset(null);
       setNotice(
-        "Enregistrement non confirmé. Réessayez pour vérifier sans compter deux fois.",
+        pending.current
+          ? "Enregistrement non confirmé. Réessayez pour vérifier sans compter deux fois."
+          : "Impossible de préparer l’enregistrement. Ouvrez l’application en HTTPS ou sur localhost.",
       );
     } finally {
       lock.current = false;
@@ -260,11 +268,8 @@ export default function Home() {
         </div>
         <section className="bottom">
           <div>
-            <h3>Un même tableau pour toute l’équipe</h3>
-            <p>
-              Les entrées sont partagées entre tous les postes utilisant ce
-              lien. Aucun renseignement patient n’est demandé.
-            </p>
+            <h3>Les entrées sont partagées entre tous les postes utilisant ce
+              lien. Aucun renseignement patient n’est demandé.</h3>
           </div>
           <button
             className="reset-all"

@@ -182,11 +182,12 @@ export default function Home() {
             <small>PROCHAINE ENTRÉE</small>
             <strong>{data ? "Hub " + next.hub : "Chargement…"}</strong>
           </div>
-          <span className="summary-detail">
-            {last
-              ? "Dernière entrée : Hub " + last.hub
-              : "Première rotation : Hub 1 → Hub 2 → Hub 3"}
-          </span>
+          <div className="summary-detail">
+            {last ? <>
+              <small>DERNIÈRE ENTRÉE</small>
+              <strong>Hub {last.hub}</strong>
+            </> : "Première rotation : Hub 1 → Hub 2 → Hub 3"}
+          </div>
           <div className="totals">
             <div className="total">
             <strong>{data ? total : "—"}</strong>

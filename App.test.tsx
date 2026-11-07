@@ -116,7 +116,7 @@ describe("Synchronisation des hubs", () => {
       fireEvent.click(screen.getByRole("button", { name: "Enregistrer une entrée dans le Hub 1" }));
     });
     await act(async () => { resolve(response()); });
-    expect(screen.getByText("Dernière entrée : Hub 1")).toBeTruthy();
+    expect(screen.getByText("DERNIÈRE ENTRÉE").parentElement?.textContent).toContain("Hub 1");
     expect(screen.getByText("Prochain à prendre").closest("article")?.textContent).toContain("Hub 2");
   });
 });

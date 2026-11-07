@@ -6,7 +6,11 @@ type Hub = {
   lastAt: number | null;
   count: number;
 };
-type Data = { now: number; hubs: Hub[] };
+type Data = {
+  now: number;
+  hubs: Hub[];
+  daily?: { startAt: number; endAt: number; count: number };
+};
 type ActionKind = "entry" | "reset";
 export default function Home() {
   const [data, setData] = useState<Data | null>(null),
@@ -118,6 +122,13 @@ export default function Home() {
   const next = queue[0],
     last = order[2]?.lastSeq ? order[2] : null;
   const total = hubs.reduce((n, h) => n + h.count, 0);
+  function requestEntry(hub: number) {
+    if (!online || lock.current || retry) return;
+    if (hub !== next.hub && !window.confirm(
+      `La prochaine entrée devrait être Hub ${next.hub}. Valider quand même une entrée dans le Hub ${hub} ?`,
+    )) return;
+    void act("entry", hub);
+  }
   function elapsed(t: number | null) {
     if (t === null) return "— — : — —";
     const s = Math.max(0, Math.floor((now - t) / 1000));
@@ -176,11 +187,18 @@ export default function Home() {
               ? "Dernière entrée : Hub " + last.hub
               : "Première rotation : Hub 1 → Hub 2 → Hub 3"}
           </span>
-          <div className="total">
+          <div className="totals">
+            <div className="total">
             <strong>{data ? total : "—"}</strong>
             <span>
-              entrées au total<small>24 dernières heures</small>
+              {total > 1 ? "entrées" : "entrée"} depuis la réinitialisation
             </span>
+            </div>
+            <div className="daily-total">
+              {data?.daily ? <>
+                Entrées depuis le {new Date(data.daily.startAt).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} à 7h : {data.daily.count}
+              </> : "Compteur quotidien en cours de chargement…"}
+            </div>
           </div>
         </section>
         <section className="cards" aria-label="Enregistrer une entrée">
@@ -206,7 +224,7 @@ export default function Home() {
               <article key={h.hub} className={"card " + color}>
                 <button
                   className="hub-action"
-                  onClick={() => act("entry", h.hub)}
+                  onClick={() => requestEntry(h.hub)}
                   disabled={!online || busy || retry}
                   aria-label={"Enregistrer une entrée dans le Hub " + h.hub}
                 >
@@ -222,7 +240,7 @@ export default function Home() {
                   <p>depuis la dernière entrée</p>
                   <div className="card-bottom">
                     <span>
-                      <strong>{data ? h.count : "—"}</strong> entrées / 24 h
+                      <strong>{data ? h.count : "—"}</strong> {h.count > 1 ? "entrées" : "entrée"} depuis la réinitialisation
                     </span>
                     <span className="add">+ 1 entrée</span>
                   </div>
@@ -284,7 +302,7 @@ export default function Home() {
             IOA URM <b> / </b> Coordination des hubs
           </span>
           <span>
-            Compteurs sur 24 h glissantes, depuis la dernière remise à zéro.
+            Compteur quotidien de 7 h à 7 h (heure de Paris), indépendant des réinitialisations.
           </span>
         </footer>
       </main>
@@ -307,7 +325,7 @@ export default function Home() {
             </h2>
             <p>
               La remise à zéro s’appliquera à tous les postes. Les chronomètres
-              et l’ordre de rotation seront conservés.
+              et l’ordre de rotation seront conservés. Le compteur quotidien ne sera pas modifié.
             </p>
             <div>
               <button autoFocus disabled={busy} onClick={() => setReset(null)}>

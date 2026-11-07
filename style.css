@@ -157,13 +157,21 @@ p {
   font-size: 12px;
   margin-left: 20px;
 }
-.total {
+.totals {
   margin-left: auto;
+  border-left: 1px solid #e1e8ed;
+  padding-left: 28px;
+}
+.daily-total {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #536b79;
+}
+.total {
   display: flex;
   gap: 14px;
   align-items: center;
-  border-left: 1px solid #e1e8ed;
-  padding-left: 28px;
 }
 .total strong {
   font-size: 38px;
@@ -261,6 +269,7 @@ p {
   margin: 6px 0 28px;
 }
 .card-bottom {
+  gap: 12px;
   border-top: 1px solid var(--edge);
   padding-top: 21px;
   display: flex;
@@ -275,6 +284,7 @@ p {
   margin-right: 5px;
 }
 .add {
+  flex-shrink: 0;
   background: white;
   border: 1px solid var(--edge);
   color: var(--ink);
@@ -490,8 +500,10 @@ footer b {
   .summary strong {
     font-size: 20px;
   }
-  .total {
+  .totals {
     padding-left: 15px;
+  }
+  .total {
     gap: 8px;
   }
   .total strong {
@@ -502,6 +514,15 @@ footer b {
   }
   .summary small {
     font-size: 8px;
+  }
+  .summary {
+    flex-wrap: wrap;
+  }
+  .totals {
+    flex-basis: 100%;
+    border-left: 0;
+    border-top: 1px solid #e1e8ed;
+    padding: 14px 0 0;
   }
   .cards {
     grid-template-columns: 1fr;

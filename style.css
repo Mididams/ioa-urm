@@ -173,6 +173,11 @@ p {
   line-height: 1.5;
   color: #536b79;
 }
+.daily-total strong {
+  display: inline;
+  font-size: inherit;
+  margin-top: 0;
+}
 .reset-date {
   display: block;
   margin-top: 4px;

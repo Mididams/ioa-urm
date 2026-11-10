@@ -201,11 +201,11 @@ export default function Home() {
             </div>
             <div className="daily-total">
               {data?.daily ? <>
-                Entrées depuis le {new Date(data.daily.startAt).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} à 7h : {data.daily.count}
+                Entrées depuis le {new Date(data.daily.startAt).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} à 7h : <strong>{data.daily.count}</strong>
               </> : "Compteur quotidien en cours de chargement…"}
             </div>
             <div className="daily-total">
-              Total entrées hier (7h - 7h) : {data?.daily?.previousCount ?? "—"}.
+              Total entrées hier (7h - 7h) : <strong>{data?.daily?.previousCount ?? "—"}</strong>.
             </div>
           </div>
         </section>

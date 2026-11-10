@@ -255,7 +255,7 @@ export default function Home() {
                   </div>
                   <div className="hub-daily">
                     {data?.daily && h.dailyCount !== undefined
-                      ? `${h.dailyCount} entrées depuis le ${formatDate(data.daily.startAt)} à 7h`
+                      ? <><strong>{h.dailyCount}</strong>{` entrées depuis le ${formatDate(data.daily.startAt)} à 7h`}</>
                       : "Compteur quotidien en cours de chargement…"}
                   </div>
                 </button>
@@ -317,7 +317,6 @@ export default function Home() {
             Elle garde en mémoire la dernière entrée de chaque hub et les chronos. Seul le nombre d’entrées est remis à zéro.<br />
             Les compteurs des 24 h, de 7 h à 7 h, sont automatiques et ne sont pas affectés par la réinitialisation manuelle.
           </p>
-          <p>Compteurs quotidiens de 7 h à 7 h (heure de Paris), indépendants des réinitialisations.</p>
         </section>
         <footer>
           <span>

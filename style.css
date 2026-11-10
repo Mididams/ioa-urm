@@ -374,7 +374,8 @@ p {
 }
 .bottom {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  text-align: center;
   gap: 20px;
   align-items: center;
   border-top: 1px solid #dce5eb;
@@ -475,7 +476,7 @@ footer b {
     margin-left: 0;
   }
   .bottom {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
   }
   footer {

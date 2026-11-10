@@ -5,11 +5,14 @@ type Hub = {
   lastSeq: number | null;
   lastAt: number | null;
   count: number;
+  resetAt?: number | null;
+  dailyCount?: number;
 };
 type Data = {
   now: number;
+  resetAt?: number | null;
   hubs: Hub[];
-  daily?: { startAt: number; endAt: number; count: number };
+  daily?: { startAt: number; endAt: number; count: number; previousCount?: number };
 };
 type ActionKind = "entry" | "reset";
 export default function Home() {
@@ -103,7 +106,7 @@ export default function Home() {
       setBusy(false);
     }
   }
-  const hubs =
+  const hubs: Hub[] =
     data?.hubs ??
     [1, 2, 3].map((hub) => ({ hub, lastSeq: null, lastAt: null, count: 0 }));
   const order = [...hubs].sort(
@@ -193,12 +196,16 @@ export default function Home() {
             <strong>{data ? total : "—"}</strong>
             <span>
               {total > 1 ? "entrées" : "entrée"} depuis la réinitialisation
+              <ResetDate at={data?.resetAt} />
             </span>
             </div>
             <div className="daily-total">
               {data?.daily ? <>
                 Entrées depuis le {new Date(data.daily.startAt).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} à 7h : {data.daily.count}
               </> : "Compteur quotidien en cours de chargement…"}
+            </div>
+            <div className="daily-total">
+              Total entrées hier (7h - 7h) : {data?.daily?.previousCount ?? "—"}.
             </div>
           </div>
         </section>
@@ -242,8 +249,14 @@ export default function Home() {
                   <div className="card-bottom">
                     <span>
                       <strong>{data ? h.count : "—"}</strong> {h.count > 1 ? "entrées" : "entrée"} depuis la réinitialisation
+                      <ResetDate at={h.resetAt} />
                     </span>
                     <span className="add">+ 1 entrée</span>
+                  </div>
+                  <div className="hub-daily">
+                    {data?.daily && h.dailyCount !== undefined
+                      ? `${h.dailyCount} entrées depuis le ${formatDate(data.daily.startAt)} à 7h`
+                      : "Compteur quotidien en cours de chargement…"}
                   </div>
                 </button>
                 <button
@@ -290,6 +303,8 @@ export default function Home() {
             <h3>Les entrées sont partagées entre tous les postes utilisant ce
               lien. Aucun renseignement patient n’est demandé.</h3>
           </div>
+        </section>
+        <section className="counter-help" aria-label="Fonctionnement des compteurs">
           <button
             className="reset-all"
             disabled={!online || busy || retry}
@@ -297,13 +312,16 @@ export default function Home() {
           >
             ↺ &nbsp; Réinitialiser tous les compteurs
           </button>
+          <p>
+            La réinitialisation des compteurs d’entrées est manuelle, à l’initiative des IOA (7 h / 19 h, par exemple).<br />
+            Elle garde en mémoire la dernière entrée de chaque hub et les chronos. Seul le nombre d’entrées est remis à zéro.<br />
+            Les compteurs des 24 h, de 7 h à 7 h, sont automatiques et ne sont pas affectés par la réinitialisation manuelle.
+          </p>
+          <p>Compteurs quotidiens de 7 h à 7 h (heure de Paris), indépendants des réinitialisations.</p>
         </section>
         <footer>
           <span>
             IOA URM <b> / </b> Coordination des hubs
-          </span>
-          <span>
-            Compteur quotidien de 7 h à 7 h (heure de Paris), indépendant des réinitialisations.
           </span>
         </footer>
       </main>
@@ -326,7 +344,7 @@ export default function Home() {
             </h2>
             <p>
               La remise à zéro s’appliquera à tous les postes. Les chronomètres
-              et l’ordre de rotation seront conservés. Le compteur quotidien ne sera pas modifié.
+              et l’ordre de rotation seront conservés. Les compteurs quotidiens et le total de la veille ne seront pas modifiés.
             </p>
             <div>
               <button autoFocus disabled={busy} onClick={() => setReset(null)}>
@@ -345,6 +363,18 @@ export default function Home() {
       )}
     </>
   );
+}
+
+function formatDate(at: number) {
+  return new Date(at).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+}
+
+function ResetDate({ at }: { at: number | null | undefined }) {
+  if (at === undefined) return <span className="reset-date">Date en cours de chargement…</span>;
+  if (at === null) return <span className="reset-date">Aucune réinitialisation manuelle</span>;
+  return <> le<span className="reset-date">{formatDate(at)} à {new Date(at).toLocaleTimeString("fr-FR", {
+    hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris",
+  })}</span></>;
 }
 
 async function rpc(name: string, body: object) {

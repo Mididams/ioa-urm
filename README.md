@@ -55,6 +55,14 @@ les remises à zéro manuelles. Les changements d’heure sont pris en compte.
 base existante. Elle conserve les événements et les droits d’accès existants.
 `schema.sql` contient aussi ce calcul pour les installations neuves.
 
+Chaque hub affiche également ses entrées de la journée de 7 h à 7 h. Le total
+de la veille correspond à la journée précédente de 7 h à 7 h, même lorsqu’aucun
+poste n’était ouvert au changement de journée. Ces totaux sont calculés depuis
+l’historique conservé en base : aucune entrée ni aucun chronomètre n’est effacé.
+La date affichée en haut est celle de la dernière réinitialisation globale ;
+chaque hub affiche sa dernière réinitialisation individuelle ou globale.
+En l’absence de réinitialisation dans l’historique, aucune date n’est inventée.
+
 Un clic sur un hub autre que le prochain hub affiché demande confirmation avant
 d’enregistrer. Annuler ne crée aucune entrée.
 

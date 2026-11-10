@@ -9,21 +9,28 @@ with clock as materialized (
   from clock
 ), bounds as (
   select (extract(epoch from observed_at) * 1000)::bigint as now_ms,
+    (extract(epoch from ((local_start - interval '1 day') at time zone 'Europe/Paris')) * 1000)::bigint as previous_start_ms,
     (extract(epoch from (local_start at time zone 'Europe/Paris')) * 1000)::bigint as start_ms,
     (extract(epoch from ((local_start + interval '1 day') at time zone 'Europe/Paris')) * 1000)::bigint as end_ms
   from day_start
 )
 select jsonb_build_object(
   'now', b.now_ms,
+  'resetAt', (select at from public.hub_events where kind = 'reset' and hub = 0 order by seq desc limit 1),
   'daily', jsonb_build_object(
     'startAt', b.start_ms,
     'endAt', b.end_ms,
+    'previousCount', (select count(*) from public.hub_events
+                      where kind = 'entry' and at >= b.previous_start_ms and at < b.start_ms),
     'count', (select count(*) from public.hub_events
               where kind = 'entry' and at >= b.start_ms and at < b.end_ms)
   ),
   'hubs', (
     select jsonb_agg(jsonb_build_object(
       'hub', h,
+      'resetAt', (select at from public.hub_events where kind = 'reset' and hub in (0, h) order by seq desc limit 1),
+      'dailyCount', (select count(*) from public.hub_events
+                     where kind = 'entry' and hub = h and at >= b.start_ms and at < b.end_ms),
       'lastSeq', (select max(seq) from public.hub_events where kind = 'entry' and hub = h),
       'lastAt', (select at from public.hub_events where kind = 'entry' and hub = h order by seq desc limit 1),
       'count', (select count(*) from public.hub_events

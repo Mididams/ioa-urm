@@ -10,7 +10,7 @@ const snapshot = {
     hub, lastSeq: null, lastAt: null, count: 0,
   })),
 };
-const response = (data = snapshot) => ({
+const response = (data: object = snapshot) => ({
   ok: true,
   json: async () => data,
 }) as Response;
@@ -25,6 +25,41 @@ afterEach(() => {
 });
 
 describe("Synchronisation des hubs", () => {
+  it("conserve les chronos et les compteurs quotidiens après une remise à zéro manuelle", async () => {
+    const initial = {
+      ...snapshot,
+      resetAt: Date.parse("2026-11-07T06:00:00Z"),
+      daily: { ...snapshot.daily, previousCount: 57 },
+      hubs: snapshot.hubs.map((h) => ({ ...h, count: 5, dailyCount: 14,
+        resetAt: Date.parse("2026-11-07T06:00:00Z"), lastAt: snapshot.now - 60000, lastSeq: h.hub })),
+    };
+    const updated = { ...initial, resetAt: Date.parse("2026-11-07T18:00:00Z"),
+      hubs: initial.hubs.map((h) => ({ ...h, count: 0, resetAt: Date.parse("2026-11-07T18:00:00Z") })) };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response(initial)).mockResolvedValue(response(updated)));
+    await act(async () => { render(<App />); });
+    expect(screen.getAllByText("14 entrées depuis le 07/11/2026 à 7h")).toHaveLength(3);
+    expect(screen.getAllByText("07/11/2026 à 07:00")).toHaveLength(4);
+    fireEvent.click(screen.getByRole("button", { name: /Réinitialiser tous les compteurs/ }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Confirmer la remise à zéro" })); });
+    expect(screen.getAllByText("07/11/2026 à 19:00")).toHaveLength(4);
+    expect(screen.getAllByText("00:01:00")).toHaveLength(3);
+    expect(screen.getAllByText("14 entrées depuis le 07/11/2026 à 7h")).toHaveLength(3);
+    expect(screen.getByText("Total entrées hier (7h - 7h) : 57.")).toBeTruthy();
+  });
+
+  it("actualise la journée et le total de la veille à la lecture suivant 7 h", async () => {
+    const updated = { ...snapshot, daily: { startAt: snapshot.daily.endAt,
+      endAt: snapshot.daily.endAt + 86400000, count: 0, previousCount: 42 },
+      hubs: snapshot.hubs.map((h) => ({ ...h, count: 5, dailyCount: 0 })) };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response()).mockResolvedValue(response(updated)));
+    await act(async () => { render(<App />); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(screen.getByText("Entrées depuis le 08/11/2026 à 7h : 0")).toBeTruthy();
+    expect(screen.getByText("Total entrées hier (7h - 7h) : 42.")).toBeTruthy();
+    expect(screen.getAllByText("0 entrées depuis le 08/11/2026 à 7h")).toHaveLength(3);
+    expect(document.querySelector(".total strong")?.textContent).toBe("15");
+  });
+
   it("annule une entrée hors rotation sans écrire en base", async () => {
     const fetchMock = vi.fn().mockResolvedValue(response());
     vi.stubGlobal("fetch", fetchMock);

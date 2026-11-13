@@ -322,6 +322,14 @@ export default function Home() {
           <span>
             IOA URM <b> / </b> Coordination des hubs
           </span>
+          <nav className="legal-links" aria-label="Informations légales">
+            <a href="./documents/mentions-legales.pdf" target="_blank" rel="noopener noreferrer" aria-label="Mentions légales (PDF, nouvel onglet)">
+              Mentions légales
+            </a>
+            <a href="./documents/politique-confidentialite.pdf" target="_blank" rel="noopener noreferrer" aria-label="Politique de confidentialité (PDF, nouvel onglet)">
+              Politique de confidentialité
+            </a>
+          </nav>
         </footer>
       </main>
       {reset !== null && (

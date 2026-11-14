@@ -44,7 +44,9 @@ développement local : les clics enregistrent de vraies entrées.
 réexécuter sur la base existante.
 
 Les compteurs des hubs cumulent toutes les entrées depuis la dernière remise à
-zéro du hub ou de tous les hubs, sans limite de 24 heures. Le total est leur somme.
+zéro globale, sans limite de 24 heures. Le total est leur somme. Seul le bouton
+« Réinitialiser tous les compteurs » est proposé. Les anciennes réinitialisations
+individuelles restent dans l’historique mais sont ignorées dans les calculs manuels.
 Le compteur quotidien additionne les entrées de tous les hubs depuis 7 h,
 heure de Paris ; avant 7 h, sa date de début est celle de la veille. Il repart
 automatiquement à zéro chaque jour à 7 h (visible à la prochaine actualisation,
@@ -54,13 +56,16 @@ les remises à zéro manuelles. Les changements d’heure sont pris en compte.
 `update-counters.sql` contient la mise à jour de la fonction de calcul pour une
 base existante. Elle conserve les événements et les droits d’accès existants.
 `schema.sql` contient aussi ce calcul pour les installations neuves.
+La correction « réinitialisation globale uniquement » nécessite d’appliquer
+`update-counters.sql` à la base existante en plus de publier l’interface reconstruite.
+Une simple reconstruction JavaScript ne met pas à jour la fonction SQL distante.
 
 Chaque hub affiche également ses entrées de la journée de 7 h à 7 h. Le total
 de la veille correspond à la journée précédente de 7 h à 7 h, même lorsqu’aucun
 poste n’était ouvert au changement de journée. Ces totaux sont calculés depuis
 l’historique conservé en base : aucune entrée ni aucun chronomètre n’est effacé.
 La date affichée en haut est celle de la dernière réinitialisation globale ;
-chaque hub affiche sa dernière réinitialisation individuelle ou globale.
+chaque hub affiche cette même date de réinitialisation globale.
 En l’absence de réinitialisation dans l’historique, aucune date n’est inventée.
 
 Un clic sur un hub autre que le prochain hub affiché demande confirmation avant

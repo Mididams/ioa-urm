@@ -28,6 +28,19 @@ afterEach(() => {
 });
 
 describe("Synchronisation des hubs", () => {
+  it("propose uniquement une remise à zéro globale et permet de l’annuler sans écriture", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response());
+    vi.stubGlobal("fetch", fetchMock);
+    await act(async () => { render(<App />); });
+    expect(screen.queryByRole("button", { name: "Réinitialiser le compteur" })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /Réinitialiser/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: /Réinitialiser tous les compteurs/ }));
+    expect(screen.getByRole("dialog").textContent).toContain("Réinitialiser tous les compteurs ?");
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("conserve les chronos et les compteurs quotidiens après une remise à zéro manuelle", async () => {
     const initial = {
       ...snapshot,

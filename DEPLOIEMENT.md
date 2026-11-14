@@ -1,4 +1,38 @@
-# Compteur horaire : aucune migration SQL
+# Compteurs manuels : réinitialisation globale uniquement
+
+Cette version retire les boutons de réinitialisation individuelle. Tous les
+compteurs manuels et leurs dates utilisent désormais la dernière réinitialisation
+globale (`kind = 'reset'`, `hub = 0`). Les événements individuels historiques sont
+conservés mais ignorés dans ces calculs.
+
+La correction SQL a été appliquée à la base partagée le 15 novembre 2026 via
+la migration `manual_counters_global_reset_only`. Vérification après application :
+79, 77 et 81 entrées (total 237), total quotidien 98 et veille 139. Les 928
+événements historiques et leur empreinte étaient identiques avant et après.
+
+Pour mettre cette correction en service, appliquer `update-counters.sql` à la
+base existante, puis publier les fichiers reconstruits de l’application. Ce script
+remplace uniquement `ioa_snapshot` ; il ne modifie aucune entrée, aucune permission
+ni la fonction d’enregistrement `ioa_action`. Ne pas réexécuter `schema.sql` sur la
+base existante et ne pas réinitialiser les compteurs pour activer la correction.
+
+Les anciens navigateurs recevront également les nouveaux calculs ; recharger la
+page après publication pour retirer leurs anciens boutons individuels. Un ancien
+bouton individuel peut encore enregistrer un événement, mais cet événement n’a
+plus d’effet sur les compteurs.
+
+Vérifications réalisées : 17 tests d’interface et de compteur horaire, compilation
+TypeScript et contrôle des pages statiques. Le corps SQL modifié a également été
+exécuté en lecture seule avec sept jeux de données fictifs : réinitialisations
+individuelles, absence de reset global, historique vide, reset global, entrée
+suivante, avant 7 h et à 7 h. La reconstitution historique de la capture retrouve
+75, 74 et 76 entrées, soit 225, et conserve le total quotidien de 86.
+
+## Notes de la version précédente : compteur horaire
+
+Les indications ci-dessous concernent uniquement l’ajout du compteur horaire.
+La correction des compteurs manuels décrite ci-dessus nécessite bien la mise à
+jour de `ioa_snapshot`.
 
 Cette version ne modifie que l’interface et ajoute une lecture des événements.
 

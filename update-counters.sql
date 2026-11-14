@@ -28,7 +28,7 @@ select jsonb_build_object(
   'hubs', (
     select jsonb_agg(jsonb_build_object(
       'hub', h,
-      'resetAt', (select at from public.hub_events where kind = 'reset' and hub in (0, h) order by seq desc limit 1),
+      'resetAt', (select at from public.hub_events where kind = 'reset' and hub = 0 order by seq desc limit 1),
       'dailyCount', (select count(*) from public.hub_events
                      where kind = 'entry' and hub = h and at >= b.start_ms and at < b.end_ms),
       'lastSeq', (select max(seq) from public.hub_events where kind = 'entry' and hub = h),
@@ -36,7 +36,7 @@ select jsonb_build_object(
       'count', (select count(*) from public.hub_events
                 where kind = 'entry' and hub = h
                   and seq > coalesce((select max(seq) from public.hub_events
-                                      where kind = 'reset' and hub in (0, h)), 0))
+                                      where kind = 'reset' and hub = 0), 0))
     ) order by h) from generate_series(1, 3) h
   )
 ) from bounds b;

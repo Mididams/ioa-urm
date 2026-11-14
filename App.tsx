@@ -22,7 +22,7 @@ export default function Home() {
     [online, setOnline] = useState(false),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
-    [reset, setReset] = useState<number | null>(null);
+    [reset, setReset] = useState(false);
   const hourlyEntries = useHourlyEntries(data?.now);
   const epoch = useRef(0);
   const lock = useRef(false),
@@ -86,7 +86,7 @@ export default function Home() {
       accept(await r.json());
       pending.current = null;
       setRetry(false);
-      setReset(null);
+      setReset(false);
       setNotice(
         action.kind === "entry"
           ? "Entrée enregistrée dans le Hub " + action.hub + "."
@@ -97,7 +97,7 @@ export default function Home() {
     } catch {
       setOnline(false);
       setRetry(pending.current !== null);
-      setReset(null);
+      setReset(false);
       setNotice(
         pending.current
           ? "Enregistrement non confirmé. Réessayez pour vérifier sans compter deux fois."
@@ -197,7 +197,7 @@ export default function Home() {
             <div className="total">
             <strong>{data ? total : "—"}</strong>
             <span>
-              {total > 1 ? "entrées" : "entrée"} depuis la réinitialisation
+              {total > 1 ? "entrées" : "entrée"} tous hubs depuis la réinitialisation globale
               <ResetDate at={data?.resetAt} />
             </span>
             </div>
@@ -253,7 +253,7 @@ export default function Home() {
                   </div>
                   <div className="card-bottom">
                     <span>
-                      <strong>{data ? h.count : "—"}</strong> {h.count > 1 ? "entrées" : "entrée"} depuis la réinitialisation
+                      <strong>{data ? h.count : "—"}</strong> {h.count > 1 ? "entrées" : "entrée"} depuis la réinitialisation globale
                       <ResetDate at={h.resetAt} />
                     </span>
                     <span className="add">+ 1 entrée</span>
@@ -263,13 +263,6 @@ export default function Home() {
                       ? <><strong>{h.dailyCount}</strong>{` entrées depuis le ${formatDate(data.daily.startAt)} à 7h`}</>
                       : "Compteur quotidien en cours de chargement…"}
                   </div>
-                </button>
-                <button
-                  className="reset-one"
-                  disabled={!online || busy || retry}
-                  onClick={() => setReset(h.hub)}
-                >
-                  Réinitialiser le compteur
                 </button>
               </article>
             );
@@ -313,12 +306,12 @@ export default function Home() {
           <button
             className="reset-all"
             disabled={!online || busy || retry}
-            onClick={() => setReset(0)}
+            onClick={() => setReset(true)}
           >
             ↺ &nbsp; Réinitialiser tous les compteurs
           </button>
           <p>
-            La réinitialisation des compteurs d’entrées est manuelle, à l’initiative des IOA (7 h / 19 h, par exemple).<br />
+            La réinitialisation des compteurs d’entrées est manuelle et commune aux trois hubs, à l’initiative des IOA (7 h / 19 h, par exemple).<br />
             Elle garde en mémoire la dernière entrée de chaque hub et les chronos. Seul le nombre d’entrées est remis à zéro.<br />
             Les compteurs des 24 h, de 7 h à 7 h, sont automatiques et ne sont pas affectés par la réinitialisation manuelle.
           </p>
@@ -337,7 +330,7 @@ export default function Home() {
           </nav>
         </footer>
       </main>
-      {reset !== null && (
+      {reset && (
         <div className="overlay">
           <section
             role="dialog"
@@ -345,27 +338,25 @@ export default function Home() {
             aria-labelledby="reset-title"
             className="modal"
             onKeyDown={(e) => {
-              if (e.key === "Escape" && !busy) setReset(null);
+              if (e.key === "Escape" && !busy) setReset(false);
             }}
           >
             <span className="modal-icon">↺</span>
             <h2 id="reset-title">
-              {reset
-                ? "Réinitialiser le Hub " + reset + " ?"
-                : "Réinitialiser tous les compteurs ?"}
+              Réinitialiser tous les compteurs ?
             </h2>
             <p>
               La remise à zéro s’appliquera à tous les postes. Les chronomètres
               et l’ordre de rotation seront conservés. Les compteurs quotidiens et le total de la veille ne seront pas modifiés.
             </p>
             <div>
-              <button autoFocus disabled={busy} onClick={() => setReset(null)}>
+              <button autoFocus disabled={busy} onClick={() => setReset(false)}>
                 Annuler
               </button>
               <button
                 className="confirm"
                 disabled={busy || retry}
-                onClick={() => act("reset", reset)}
+                onClick={() => act("reset", 0)}
               >
                 {busy ? "Enregistrement…" : "Confirmer la remise à zéro"}
               </button>

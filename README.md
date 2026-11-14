@@ -70,3 +70,27 @@ La remise à zéro conserve les chronomètres, la rotation et le compteur quotid
 Après un échec réseau,
 « Réessayer l’enregistrement » réutilise le même identifiant pour éviter les
 doublons tant que la page reste ouverte.
+
+## Compteur glissant sur 60 minutes
+
+Aucune migration SQL n’est nécessaire. Le compteur lit `hub_events` en GET avec
+les droits SELECT et la politique `shared_read` déjà définis dans `schema.sql`.
+Les RPC `ioa_snapshot` et `ioa_action`, les permissions et les données sont inchangées.
+Ne pas réexécuter `schema.sql` ni `update-counters.sql` pour cette fonctionnalité.
+
+`hourly.ts` récupère uniquement `hub` et `at` des événements `kind = entry` de la
+fenêtre `]heure serveur - 60 minutes, heure serveur]`. La lecture est paginée avec
+un total exact pour éviter les résultats tronqués. L’heure serveur vient de la
+réponse existante de `ioa_snapshot` ; l’horloge du poste est corrigée avec ce décalage.
+Les resets n’interviennent jamais dans ce calcul.
+
+Les nouvelles données sont lues après les snapshots reçus toutes les 2 secondes
+et après les actions confirmées. Le timer existant de 1 seconde retire les entrées
+expirées, même sans clic. Les navigateurs peuvent ralentir les timers en arrière-plan.
+Une lecture lente ne bloque pas les snapshots ni les actions et ne se chevauche
+pas avec une autre lecture horaire. Une lecture échouée ou incomplète affiche `—`
+uniquement pour l’heure, puis une nouvelle lecture est tentée au snapshot suivant.
+
+`npm test` teste le compteur et les régressions avec HTTP simulé, sans accès à
+Supabase. `npm run test:static` vérifie aussi les fichiers compilés avec réseau simulé.
+Voir [DEPLOIEMENT.md](DEPLOIEMENT.md) pour la publication manuelle éventuelle.

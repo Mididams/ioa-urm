@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.tsx";
+vi.mock("./hourly", () => ({ useHourlyEntries: () => [] }));
 
 const snapshot = {
   now: 1_790_000_000_000,
@@ -10,6 +11,8 @@ const snapshot = {
     hub, lastSeq: null, lastAt: null, count: 0,
   })),
 };
+const exactText = (text: string) => (_: string, node: Element | null) =>
+  node?.textContent === text && !Array.from(node.children).some(child => child.textContent === text);
 const response = (data: object = snapshot) => ({
   ok: true,
   json: async () => data,
@@ -37,14 +40,14 @@ describe("Synchronisation des hubs", () => {
       hubs: initial.hubs.map((h) => ({ ...h, count: 0, resetAt: Date.parse("2026-11-07T18:00:00Z") })) };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response(initial)).mockResolvedValue(response(updated)));
     await act(async () => { render(<App />); });
-    expect(screen.getAllByText("14 entrées depuis le 07/11/2026 à 7h")).toHaveLength(3);
+    expect(screen.getAllByText(exactText("14 entrées depuis le 07/11/2026 à 7h"))).toHaveLength(3);
     expect(screen.getAllByText("07/11/2026 à 07:00")).toHaveLength(4);
     fireEvent.click(screen.getByRole("button", { name: /Réinitialiser tous les compteurs/ }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Confirmer la remise à zéro" })); });
     expect(screen.getAllByText("07/11/2026 à 19:00")).toHaveLength(4);
     expect(screen.getAllByText("00:01:00")).toHaveLength(3);
-    expect(screen.getAllByText("14 entrées depuis le 07/11/2026 à 7h")).toHaveLength(3);
-    expect(screen.getByText("Total entrées hier (7h - 7h) : 57.")).toBeTruthy();
+    expect(screen.getAllByText(exactText("14 entrées depuis le 07/11/2026 à 7h"))).toHaveLength(3);
+    expect(screen.getByText(exactText("Total entrées hier (7h - 7h) : 57."))).toBeTruthy();
   });
 
   it("actualise la journée et le total de la veille à la lecture suivant 7 h", async () => {
@@ -54,9 +57,9 @@ describe("Synchronisation des hubs", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response()).mockResolvedValue(response(updated)));
     await act(async () => { render(<App />); });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    expect(screen.getByText("Entrées depuis le 08/11/2026 à 7h : 0")).toBeTruthy();
-    expect(screen.getByText("Total entrées hier (7h - 7h) : 42.")).toBeTruthy();
-    expect(screen.getAllByText("0 entrées depuis le 08/11/2026 à 7h")).toHaveLength(3);
+    expect(screen.getByText(exactText("Entrées depuis le 08/11/2026 à 7h : 0"))).toBeTruthy();
+    expect(screen.getByText(exactText("Total entrées hier (7h - 7h) : 42."))).toBeTruthy();
+    expect(screen.getAllByText(exactText("0 entrées depuis le 08/11/2026 à 7h"))).toHaveLength(3);
     expect(document.querySelector(".total strong")?.textContent).toBe("15");
   });
 
@@ -88,7 +91,7 @@ describe("Synchronisation des hubs", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response()));
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await act(async () => { render(<App />); });
-    expect(screen.getByText("Entrées depuis le 07/11/2026 à 7h : 42")).toBeTruthy();
+    expect(screen.getByText(exactText("Entrées depuis le 07/11/2026 à 7h : 42"))).toBeTruthy();
     expect(screen.queryByText(/24 dernières heures/)).toBeNull();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Enregistrer une entrée dans le Hub 1" }));

@@ -604,3 +604,15 @@ footer b {
     flex-wrap: wrap;
   }
 }
+
+.hourly {
+  margin: -12px 0 22px;
+  font-size: 12px;
+  color: #617582;
+}
+.hourly strong {
+  font-size: 25px;
+  color: #203847;
+  margin-right: 5px;
+  font-variant-numeric: tabular-nums;
+}

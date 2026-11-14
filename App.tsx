@@ -1,4 +1,5 @@
 import React from "react";
+import { useHourlyEntries } from "./hourly";
 import { useEffect, useRef, useState } from "react";
 type Hub = {
   hub: number;
@@ -22,6 +23,7 @@ export default function Home() {
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
     [reset, setReset] = useState<number | null>(null);
+  const hourlyEntries = useHourlyEntries(data?.now);
   const epoch = useRef(0);
   const lock = useRef(false),
     offset = useRef(0),
@@ -246,6 +248,9 @@ export default function Home() {
                   <h2>Hub {h.hub}</h2>
                   <div className="timer">{elapsed(h.lastAt)}</div>
                   <p>depuis la dernière entrée</p>
+                  <div className="hourly" title={hourlyEntries === null ? "Compteur horaire indisponible ou en cours de chargement" : undefined}>
+                    <strong>{hourlyEntries === null ? "—" : hourlyEntries.filter((e) => e.hub === h.hub && e.at > now - 3600000 && e.at <= now).length}</strong> entrées sur 1h
+                  </div>
                   <div className="card-bottom">
                     <span>
                       <strong>{data ? h.count : "—"}</strong> {h.count > 1 ? "entrées" : "entrée"} depuis la réinitialisation

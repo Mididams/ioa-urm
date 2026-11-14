@@ -12,7 +12,9 @@ for (const file of ["../index.html", "../dist/index.html"]) {
     resources: "usable",
     virtualConsole: console,
     beforeParse(window) {
-      window.fetch = async () => ({
+      window.fetch = async (url) => String(url).includes("/hub_events?") ? {
+        ok: true, headers: { get: () => "*/0" }, json: async () => [],
+      } : ({
         ok: true,
         json: async () => ({
           now: Date.now(),
@@ -31,6 +33,7 @@ for (const file of ["../index.html", "../dist/index.html"]) {
     assert.equal(dom.window.document.querySelector("h1")?.textContent, "Une entrée. Un hub.");
     assert.equal(dom.window.document.querySelectorAll(".card").length, 3);
     assert.ok(dom.window.document.querySelector(".connection.ok"), "The snapshot must load");
+    assert.deepEqual([...dom.window.document.querySelectorAll(".hourly strong")].map(e => e.textContent), ["0", "0", "0"]);
   } finally {
     dom.window.close();
   }
